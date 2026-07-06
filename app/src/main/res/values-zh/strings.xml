@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基本界面 -->
+    <string name="app_name">Bannerlator Bionic</string>
+    <string name="run">运行</string>
+    <string name="edit">编辑</string>
+    <string name="remove">删除</string>
+    <string name="add">添加</string>
+    <string name="shortcuts">游戏</string>
+    <string name="containers">容器</string>
+    <string name="input_controls">输入控制</string>
+    <string name="settings">设置</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="about">关于</string>
+    <string name="exit">退出</string>
+    <string name="save">保存</string>
+    <string name="export">导出</string>
+    <string name="import_profile">导入配置文件</string>
+    <string name="export_profile">导出配置文件</string>
+    
+    <!-- 容器相关 -->
+    <string name="new_container">新建容器</string>
+    <string name="edit_container">编辑容器</string>
+    <string name="container">容器</string>
+    <string name="do_you_want_to_remove_this_container">您要删除此容器吗？</string>
+    <string name="do_you_want_to_duplicate_this_container">您要复制此容器吗？</string>
+    
+    <!-- 游戏相关 -->
+    <string name="add_to_home_screen">添加到主屏幕</string>
+    <string name="add_to_homescreen">添加到主屏幕</string>
+    
+    <!-- 图形设置 -->
+    <string name="graphics_driver">图形驱动</string>
+    <string name="renderer">渲染器</string>
+    <string name="dxwrapper">DX 包装器</string>
+    <string name="dxvk_version">DXVK 版本</string>
+    <string name="vkd3d_version">VKD3D 版本</string>
+    <string name="frame_rate">帧率</string>
+    <string name="screen_size">屏幕大小</string>
+    <string name="resolution">分辨率</string>
+    <string name="show_fps">显示 FPS 计数器</string>
+    
+    <!-- 语言设置 -->
+    <string name="language_settings">语言</string>
+    <string name="language_settings_description">选择应用的显示语言。需要重启才能完全生效。</string>
+    <string name="language_chinese">中文</string>
+    <string name="language_english">English</string>
+    <string name="language_system">跟随系统</string>
+    
+    <!-- 其他常用 -->
+    <string name="loading">加载中…</string>
+    <string name="general">常规</string>
+    <string name="advanced">高级</string>
+    <string name="experimental">实验性</string>
+    <string name="none">无</string>
+    <string name="enabled">已启用</string>
+    <string name="disabled">已禁用</string>
+    <string name="enable">启用</string>
+    <string name="disable">禁用</string>
+    <string name="version">版本</string>
+    <string name="name">名称</string>
+    <string name="value">值</string>
+    <string name="filter">筛选</string>
+    <string name="all">全部</string>
+    <string name="copy">复制</string>
+    <string name="duplicate">复制</string>
+    <string name="browse">浏览</string>
+    <string name="configure">配置</string>
+    <string name="reconfigure">重新配置</string>
+    <string name="reset">重置</string>
+    <string name="warning">警告</string>
+    <string name="description">描述</string>
+    <string name="profile">配置文件</string>
+    <string name="preset">预设</string>
+    <string name="system">系统</string>
+    <string name="sound">声音</string>
+    <string name="keyboard">键盘</string>
+    <string name="theme">主题</string>
+    <string name="background">背景</string>
+    <string name="brightness">亮度</string>
+    <string name="contrast">对比度</string>
+    <string name="gamma">伽马</string>
+    <string name="orientation">方向</string>
+    <string name="horizontal">水平</string>
+    <string name="vertical">垂直</string>
+    <string name="width">宽度</string>
+    <string name="height">高度</string>
+    <string name="range">范围</string>
+    <string name="performance">性能</string>
+    <string name="stability">稳定性</string>
+    <string name="compatibility">兼容性</string>
+</resources>

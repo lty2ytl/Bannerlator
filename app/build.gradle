@@ -1,0 +1,216 @@
+import java.net.URL
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.8.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
+        classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.0.21'
+    }
+}
+
+plugins {
+    id 'com.android.application'
+}
+apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+tasks.register("downloadImageFS") {
+    def assetDir = new File(project.rootDir, ["app","src","main","assets"].join(File.separator))
+    File imageFS = new File(assetDir, "imagefs.tar.zst")
+    String imageFSURL = "https://github.com/star-emu/contents/raw/refs/heads/main/imagefs.tar.zst"
+
+    doLast {
+        if (!imageFS.exists()) {
+            println("ImageFS was not present, downloading...\n")
+            new URL(imageFSURL).withInputStream { i -> imageFS.withOutputStream { it << i } }
+        }
+    }
+}
+
+tasks.register("downloadProton") {
+    def assetDir = new File(project.rootDir, ["app","src","main","assets"].join(File.separator))
+    File protonARM64EC = new File(assetDir, "proton-9.0-arm64ec.tar.zst")
+    String protonARM64ECUrl = "https://github.com/star-emu/contents/raw/refs/heads/main/proton-9.0-arm64ec.tar.zst"
+
+    doLast {
+        if (!protonARM64EC.exists()) {
+            println("Proton 9.0 ARM64EC was not present, downloading...\n")
+            new URL(protonARM64ECUrl).withInputStream { i -> protonARM64EC.withOutputStream { it << i } }
+        }
+    }
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+downloadProton.dependsOn(downloadImageFS)
+preBuild.dependsOn(downloadProton)
+
+android {
+    namespace 'com.winlator.star'
+    compileSdk 34
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 28
+        versionCode 38
+        versionName "2.3"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+        freeCompilerArgs += ['-Xskip-metadata-version-check']
+    }
+
+    signingConfigs {
+        // AOSP testkey (android@android.com, SHA-256 A4:0D:A8:0A:59:D1:70:CA…). A fixed,
+        // publicly-known key so every build shares ONE signature — new releases/updates
+        // install over a previously installed version instead of forcing an uninstall.
+        // Signed with v1 (JAR) + v2 + v3 for broadest installer/OS compatibility.
+        testkey {
+            storeFile file("${rootDir}/keystore/testkey.p12")
+            storeType "PKCS12"
+            storePassword "android"
+            keyAlias "testkey"
+            keyPassword "android"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.testkey
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.testkey
+            // Several animated-background frames (ab_*, ab_gear_*, ab_quilt_*) and the
+            // ic_stat_ab_gear notification icon are GIFs with a .png extension. Release
+            // enables PNG crunching by default and AAPT2 rejects them ("file failed to
+            // compile"); debug skips crunching. Disable it so release matches debug.
+            crunchPngs false
+        }
+    }
+
+    // Release builds run lintVitalRelease (debug skips it). Don't let a pre-existing
+    // lint warning abort the build — we ship the same code that already runs in debug,
+    // just non-debuggable + optimized. (No R8 yet: minifyEnabled stays false.)
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
+    flavorDimensions "version"
+    productFlavors {
+        standard {
+            dimension "version"
+            applicationId "com.winlator.banner"
+            resValue "string", "app_name", "Bannerlator Bionic"
+        }
+        ludashi {
+            dimension "version"
+            applicationId "com.ludashi.benchmark"
+            resValue "string", "app_name", "Bannerlator Bionic Ludashi"
+        }
+        pubg {
+            dimension "version"
+            applicationId "com.tencent.ig"
+            resValue "string", "app_name", "Bannerlator Bionic PuBG"
+        }
+    }
+
+    ndkVersion '29.0.14206865'
+
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+}
+
+// We vendor a runtime-safe okhttp3.coroutines.executeAsync shim
+// (store/compat/ExecuteAsyncKt.kt) because the real okhttp-coroutines artifact was
+// compiled against newer Kotlin/coroutines and throws NoSuchMethodError on our stack.
+// The real artifact must NOT be on the classpath or it (a) duplicates the shim's class
+// — release dex merge fails with "defined multiple times" — and (b) reintroduces the
+// runtime crash. Exclude it everywhere; the shim is the sole provider, as intended.
+configurations.all {
+    exclude group: 'com.squareup.okhttp3', module: 'okhttp-coroutines'
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2024.02.00')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.8.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
+    implementation 'androidx.navigation:navigation-compose:2.7.6'
+    implementation 'io.coil-kt:coil-compose:2.6.0'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+
+    implementation 'androidx.appcompat:appcompat:1.4.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.github.luben:zstd-jni:1.5.2-3@aar'
+    implementation 'org.tukaani:xz:1.7'
+    implementation 'org.apache.commons:commons-compress:1.20'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    implementation files('libs/MidiSynth/MidiSynth.jar')
+    implementation 'in.dragonbra:javasteam:1.8.0'
+    implementation 'in.dragonbra:javasteam-depotdownloader:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.squareup.okio:okio:3.16.0'
+    implementation 'com.google.code.gson:gson:2.8.8'
+    implementation 'org.conscrypt:conscrypt-android:2.5.2'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.68'
+    implementation 'org.openjsse:openjsse:1.1.7'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    implementation 'com.kohlschutter.junixsocket:junixsocket-common:2.6.0'
+    implementation 'com.kohlschutter.junixsocket:junixsocket-native-common:2.6.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+}
